@@ -1,0 +1,99 @@
+{
+  "object": "appl_get_gearshift_position",
+  "default_out": "0",
+  "cases": [
+    {
+      "name": "TC01_ValidF1",
+      "desc": "有效档位 F1(3)：返回3并刷新上次有效值",
+      "spec": "SW-REQ-017",
+      "steps": [
+        {
+          "values": {
+            "Gearshift_position": 3,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 0
+          },
+          "expect": {
+            "appl_get_gearshift_position()": 3,
+            "appl_get_gearshift_position::lastValidGearPos#1": 3,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 0
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC02_InvalidMaskProgression",
+      "desc": "多测试步：无效值连续出现，前两次返回上次有效值并累加掩码，第3次返回当前无效值",
+      "spec": "SW-REQ-017",
+      "steps": [
+        {
+          "values": {
+            "Gearshift_position": 15,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 0
+          },
+          "expect": {
+            "appl_get_gearshift_position()": 0,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 1
+          }
+        },
+        {
+          "values": {
+            "Gearshift_position": 15,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 1
+          },
+          "expect": {
+            "appl_get_gearshift_position()": 0,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 2
+          }
+        },
+        {
+          "values": {
+            "Gearshift_position": 15,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 2
+          },
+          "expect": {
+            "appl_get_gearshift_position()": 15,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 2
+          }
+        }
+      ]
+    },
+    {
+      "name": "TC03_LastValidThenInvalid",
+      "desc": "多测试步：先有效(3)刷新上次有效值，随后无效两次返回3，第3次返回15",
+      "spec": "SW-REQ-017",
+      "steps": [
+        {
+          "values": {
+            "Gearshift_position": 3,
+            "appl_get_gearshift_position::lastValidGearPos#1": 0,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 0
+          },
+          "expect": {
+            "appl_get_gearshift_position()": 3,
+            "appl_get_gearshift_position::lastValidGearPos#1": 3,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 0
+          }
+        },
+        {
+          "values": {
+            "Gearshift_position": 15,
+            "appl_get_gearshift_position::lastValidGearPos#1": 3,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 0
+          },
+          "expect": {
+            "appl_get_gearshift_position()": 3,
+            "appl_get_gearshift_position::lastValidGearPos#1": 3,
+            "appl_get_gearshift_position::startupInvalidMaskCnt#1": 1
+          }
+        }
+      ]
+    }
+  ]
+}
