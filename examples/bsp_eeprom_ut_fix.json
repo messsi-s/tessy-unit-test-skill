@@ -1,0 +1,36 @@
+{
+  "module": "BSP_eeprom_UT",
+  "objects": [
+    {
+      "object": "Flash_Eeprom_JobErrorNotification",
+      "values": [{}, {}],
+      "stubs": {}
+    },
+    {
+      "object": "BSP_eeprom_Init",
+      "values": [{}, {}],
+      "stubs": {"FLASH_Eeprom_Init": "return 0u;"}
+    },
+    {
+      "object": "BSP_eeprom_Write",
+      "values": [
+        {"blockId": "0", "buffer": "NULL"},
+        {"blockId": "1", "buffer": "NULL"}
+      ],
+      "stubs": {"FLASH_Eeprom_Write": "return 0u;"}
+    },
+    {
+      "object": "BSP_eeprom_Read",
+      "values": [
+        {"blockId": "0", "offset": "0", "dataBuffer": "NULL", "length": "8"},
+        {"blockId": "1", "offset": "0", "dataBuffer": "NULL", "length": "0"}
+      ],
+      "stubs": {"FLASH_Eeprom_Read": "return 0u;"}
+    },
+    {
+      "object": "BSP_eeprom_MainFunction",
+      "values": [{}, {}],
+      "stubs": {"FLASH_Eeprom_MainFunction": "(void)0;"}
+    }
+  ]
+}
