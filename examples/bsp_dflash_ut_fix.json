@@ -1,0 +1,34 @@
+{
+  "module": "BSP_Dflash_UT",
+  "objects": [
+    {
+      "object": "BSP_Dflash_Erase_Page",
+      "values": [{"Erase_Address": "0x00010000"}],
+      "stubs": {
+        "FLASH_Unlock": "(void)0;",
+        "FLASH_Lock": "(void)0;",
+        "FLASH_ErasePage": "return 0u;"
+      }
+    },
+    {
+      "object": "BSP_Dflash_Write",
+      "values": [
+        {"Write_Address": "0x00010000", "Write_buffer": "NULL", "length": "8"},
+        {"Write_Address": "0x00010000", "Write_buffer": "NULL", "length": "0"}
+      ],
+      "stubs": {
+        "FLASH_Unlock": "(void)0;",
+        "FLASH_Lock": "(void)0;",
+        "FLASH_ProgramSection": "return 0u;"
+      }
+    },
+    {
+      "object": "BSP_Dflash_Read",
+      "values": [
+        {"Read_Address": "0x00010000", "Read_buffer": "NULL", "length": "8"},
+        {"Read_Address": "0x00010000", "Read_buffer": "NULL", "length": "0"}
+      ],
+      "stubs": {"FLASH_Read": "(void)0;"}
+    }
+  ]
+}
