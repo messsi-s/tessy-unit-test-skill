@@ -1,5 +1,5 @@
 {
-  "object": "CAN_Controller_Rx_handler",
+  "object": "CAN_Rx_Handler",
   "pointer": "canMsg",
   "target": "target_canMsg",
   "plan": [

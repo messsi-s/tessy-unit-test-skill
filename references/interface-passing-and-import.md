@@ -1,9 +1,9 @@
 # 接口方向、可执行性与导入语义（TESSY 5.1 实测）
 
-> 本文件记录 2026-11 一轮真实工程（T1V_test / AUTOSAR 应用层）中反复踩到的四类问题：
+> 本文件记录 2026-11 一轮真实工程（Demo_test / AUTOSAR 应用层）中反复踩到的四类问题：
 > ① 指针参数导致接口"不完整"、对象不可执行；② 导入是整体替换；③ 模块挂了手写桩源文件导致用例桩体失效；
 > ④ 数据模型到底该写成什么样（以 yaml 导出为准）。
-> 全部结论都在 TESSY 5.1.10 + Keil ARMCC 上实测过。
+> 全部结论都在 TESSY 5.1.10 + uVision ARMCC 上实测过。
 
 ---
 
@@ -26,7 +26,7 @@
 快速脚本（PowerShell）：
 
 ```powershell
-& $PY -c "import glob,xml.etree.ElementTree as ET; P=r'D:\T1V_Tessytest\tessy\persist\tessy\project'; [print(r.get('name'), r.get('state_mask'), r.get('testitem_state_mask'), len(list(r.iter('testcase')))) for r in (ET.parse(f).getroot() for f in glob.glob(P+r'\*\*\.tdb\*\testobject.xml', recursive=True))]"
+& $PY -c "import glob,xml.etree.ElementTree as ET; P=r'D:\Demo_Tessytest\tessy\persist\tessy\project'; [print(r.get('name'), r.get('state_mask'), r.get('testitem_state_mask'), len(list(r.iter('testcase')))) for r in (ET.parse(f).getroot() for f in glob.glob(P+r'\*\*\.tdb\*\testobject.xml', recursive=True))]"
 ```
 
 > 经验值：**能正常跑的对象 = `state 0x…1188` + `item 0x80`**；判成 `0x1180 / 0x00` 的对象，
@@ -49,7 +49,7 @@
 又有 `OUT`（函数写回的字段）：
 
 ```c
-void appl_steerwheel_update_sig_tx_mfsl(CanMFSLMsgBuf *msg);   // msg 内部的 status.* 是被写回的
+void demo_signal_tx(CanMFSLMsgBuf *msg);   // msg 内部的 status.* 是被写回的
 ```
 
 而 TESSY 5.1 的 **参数（Parameter）只有三种 Passing：`IN` / `EXTERN` / `IRRELEVANT`，没有 INOUT**。
@@ -96,7 +96,7 @@ xlsx / yaml 的 `Values`/`Values:` 第 2 行是方向行，`import -set-passing`
 
 | 标记 | 含义 | 典型用途 |
 |---|---|---|
-| `i` | IN | 让被标成 IRRELEVANT 的静态全局变成可输入（例：`AppGearPose.x`） |
+| `i` | IN | 让被标成 IRRELEVANT 的静态全局变成可输入（例：`DemoPose.x`） |
 | `o` | OUT | 让变量变成输出 |
 | **`x`** | **IRRELEVANT** | **让指针参数 / 不想断言的成员失效（本文件 §2 的核心）** |
 
@@ -106,8 +106,8 @@ xlsx / yaml 的 `Values`/`Values:` 第 2 行是方向行，`import -set-passing`
 常见两种用法：
 
 - **IRRELEVANT → IN**（让静态变量可输入）：
-  `AppGearPose` 原本全是 IRRELEVANT，加一列 `AppGearPose.x` 方向 `i` + 值，`import -set-passing`
-  后 interface 变成 `IN`，`appl_calc_gear_lever_pos` 的 C0/C1 从 25%/14% 直接到 100%。
+  `DemoPose` 原本全是 IRRELEVANT，加一列 `DemoPose.x` 方向 `i` + 值，`import -set-passing`
+  后 interface 变成 `IN`，`demo_calc_lever_pos` 的 C0/C1 从 25%/14% 直接到 100%。
 - **IN → IRRELEVANT**（指针参数解套）：见 §2。
 
 改完必须回读验证：
@@ -184,8 +184,8 @@ $testobject {
 				uint8_t DAL_GPIO_PopLeftRollerAction() '''
 					return 1u;
 				'''
-				GEAR_HALL_DATA_TYPE DAL_Get_Gear_HallData() '''
-					{ GEAR_HALL_DATA_TYPE s = { 86u, 58u }; return s; }
+				DEMO_DATA_TYPE DAL_Get_Data() '''
+					{ DEMO_DATA_TYPE s = { 86u, 58u }; return s; }
 				'''
 			}
 			$calltrace { *** Ignore Call Trace *** }
@@ -198,9 +198,9 @@ $testobject {
 
 - 文件必须 **GBK/cp936** 写盘，UTF-8 会静默导入失败；
 - **桩签名必须与接口报告里的 `decl` 逐字一致**（不同模块的 IDB 拼写不同！）：
-  有的模块认 `unsigned short DAL_Tim_GetCurrentTime()`，有的只认 `uint16_t DAL_Tim_GetCurrentTime()`；
-  写错 → `[IMPEX] Failed to import`（实测：同一工程里 `appl_gear` 认 `unsigned short`，
-  `DAL_SteerWheel_UT` 只认 `uint16_t`）。
+  有的模块认 `unsigned short DAL_Tim_GetTime()`，有的只认 `uint16_t DAL_Tim_GetTime()`；
+  写错 → `[IMPEX] Failed to import`（实测：同一工程里 `demo_gear` 认 `unsigned short`，
+  `DAL_DemoSignal_UT` 只认 `uint16_t`）。
   **最稳做法**：`export -format xml` 拿 `<func decl="...">`，原样抄进 `$stubfunctions`；
 - 枚举/结构体返回值桩体用 TESSY 模板写法 `{ T s = { 0 }; return s; }`；
 - 指针参数在 `$inputs` 里只能 `= *none*`；
@@ -239,10 +239,10 @@ TIE 里能选的方向：局部变量/全局变量一般是 `IN` / `OUT` / `INOU
 模块的**源文件列表**里除了被测 `.c`，还额外挂了一个手写的桩源文件，例如：
 
 ```c
-// D:\...\baseline_startup\ts_harness_stubs_gear.c
-uint16_t DAL_Tim_GetCurrentTime(void) { return 0u; }
-uint8_t  DAL_Tim_CheckTimeOut(uint16_t a, uint16_t b, uint16_t c) { return 0u; }
-GEAR_HALL_DATA_TYPE DAL_Get_Gear_HallData(void) { GEAR_HALL_DATA_TYPE d={0,0}; return d; }
+// D:\...\baseline_startup\ts_harness_stubs_demo.c
+uint16_t DAL_Tim_GetTime(void) { return 0u; }
+uint8_t  DAL_Tim_CheckTimeout(uint16_t a, uint16_t b, uint16_t c) { return 0u; }
+DEMO_DATA_TYPE DAL_Get_Data(void) { DEMO_DATA_TYPE d={0,0}; return d; }
 void DAL_eeprom_Read(...) { ... }
 uint8_t E2E_CalcCrc(...) { return 0u; }
 ```
@@ -255,13 +255,13 @@ uint8_t E2E_CalcCrc(...) { return 0u; }
 ```powershell
 & $TESSY_CMD list-source-files                       # 确认是否多了一个 ts_harness_stubs_*.c
 # 备份后从模块移除
-& $TESSY_CMD remove-source-file "D:\...\baseline_startup\ts_harness_stubs_gear.c"
+& $TESSY_CMD remove-source-file "D:\...\baseline_startup\ts_harness_stubs_demo.c"
 & $TESSY_CMD analyze                                 # 重建 IDB（不 analyze 会残留引用）
 ```
 
 移除后**必须**给"每条用例 × 每个桩"都写桩体，否则：
 
-- 报 `com.razorcat.tessy.services.testdata.MissingStubCodeException: [UCE] Missing stub code for test object 'xxx'`
+- 报 `MissingStubCodeException: [UCE] Missing stub code for test object 'xxx'`
   （工程选项 `Abort on missing stub code` 默认是开的）。
 
 补桩体时注意：
@@ -342,8 +342,8 @@ TIE/IDA 配置 → Analyze → GUI Test Data → Initialize Test Data (Ctrl+I, O
 ```
 
 > **Ctrl+I 和 Analyze 缺一不可**：只做 Ctrl+I，mask 停在 `0x80000088`（数据模型有了但有效性位没算）；
-> 补一次 `tessycmd analyze` 才变 `0x…1188`/`0x…1198`。2026-11 在 `BSP_Dflash_UT`（3 对象）
-> 和 `BSP_eeprom_UT`（5 对象）上两次验证，修完执行 C0/C1 全 100%。
+> 补一次 `tessycmd analyze` 才变 `0x…1188`/`0x…1198`。2026-11 在 `BSP_Flash_UT`（3 对象）
+> 和 `BSP_Eeprom_UT`（5 对象）上两次验证，修完执行 C0/C1 全 100%。
 > "数据模型空"的 signature：yaml 的 `Values:` 只有 `- []` `- []` `- [tc1.1]`。
 
 指针参数（`can_msgbuff_t *canMsg`）必须先用 **TIE → IDA → Pointer Target = Global Variable**

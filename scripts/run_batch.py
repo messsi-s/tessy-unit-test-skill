@@ -3,7 +3,7 @@
 用法：
     python run_batch.py                                    # 默认执行整个测试集合
     python run_batch.py --collection "New Test Collection"
-    python run_batch.py --instrumentation TESTOBJECT_ONLY --report-name Gear_UT
+    python run_batch.py --instrumentation TESTOBJECT_ONLY --report-name Demo_UT
     python run_batch.py --tbs my.tbs --out reports        # 直接跑已有 tbs
 
 注意：

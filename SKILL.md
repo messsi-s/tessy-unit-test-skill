@@ -3,7 +3,7 @@ name: tessy-unit-test
 description: >
   TESSY 5.x 嵌入式 C 单元测试全流程技能：建模块/接口、普通桩与高级桩的选择与配置、
   按源码分支生成测试用例、用 tessycmd 导入并回读校验、批处理执行与失败分诊、
-  覆盖率(C0/C1)测量与缺口解释、独立复核（覆盖度/完整度）。适用于 Keil(ARMCC)/uVision
+  覆盖率(C0/C1)测量与缺口解释、独立复核（覆盖度/完整度）。适用于 armcc/uVision
   目标，也适用于需要用 TESSY 做单元测试用例交付的场景。
 whenToUse: >
   当用户要求"用 TESSY 做单元测试""给 xx.c 写单元测试用例并导入 TESSY""补全/审查 TESSY 用例"
@@ -13,7 +13,7 @@ whenToUse: >
 
 # TESSY 单元测试技能包
 
-面向 **TESSY 5.1.x + Keil ARMCC/uVision** 的可复用操作手册。核心原则只有一句：
+面向 **TESSY 5.1.x + armcc/uVision** 的可复用操作手册。核心原则只有一句：
 
 > **先用 `tessycmd` 看清"真实接口 + 桩类型"，再生成数据；生成后必须回读校验、执行验证。**
 
@@ -25,11 +25,11 @@ whenToUse: >
 
 | 变量 | 含义 | 示例 |
 |---|---|---|
-| `TESSY_BIN` | tessycmd 所在目录 | `D:\tessy\Razorcat\TESSY_5.1\bin` |
+| `TESSY_BIN` | tessycmd 所在目录 | `D:\tessy\TESSY_5.1\bin` |
 | `TESSY_CMD` | tessycmd 全路径 | `%TESSY_BIN%\tessycmd.exe` |
-| `TESSY_PROJECT` | 工程名 | `T1V_test` |
+| `TESSY_PROJECT` | 工程名 | `Demo_test` |
 | `TESSY_COLLECTION` | 测试集合名 | `New Test Collection` |
-| `TESSY_MODULE` | 模块名 | `appl_gear` |
+| `TESSY_MODULE` | 模块名 | `demo_gear` |
 | `PY` | 带 openpyxl 的 python | `D:\PythonProject\.venv\Scripts\python.exe` |
 | `WORK` | 临时工作目录 | `%TEMP%\tessy_ut` |
 
@@ -66,7 +66,7 @@ P7 覆盖率(C0/C1)统计与缺口解释
 P8 交付物与文档
 ```
 
-**顺序铁律**：任何"改 TIE / 改源码 / 改 Keil 工程 / 改环境属性"之后，都要
+**顺序铁律**：任何"改 TIE / 改源码 / 改 uVision 工程 / 改环境属性"之后，都要
 `analyze` → 再导入用例 → 再执行。**先导入后 Analyze 会把普通桩桩体清空**，用例随即变 `not executable`。
 
 ---
@@ -118,7 +118,7 @@ P8 交付物与文档
 | 看到什么 | 含义 | 数据怎么写 |
 |---|---|---|
 | `name="void DAL_eeprom_Read(...)" stub="none"` | 未打桩，链接真实实现（或 harness 默认实现） | 不用管 |
-| `stub="normal"` | 普通桩（代码桩） | 在 **Stubs 表**写桩体 `return 1u;`、`GEAR_HALL_DATA_TYPE d; d.alpha_angle=86U; return d;` |
+| `stub="normal"` | 普通桩（代码桩） | 在 **Stubs 表**写桩体 `return 1u;`、`DEMO_DATA_TYPE d; d.alpha_angle=86U; return d;` |
 | `stub="advanced"` 且出现 `name="xxx()" passing="IN"` | **高级桩** | 在 **Values 表**给变量：`函数名()`、`函数名().成员`、`函数名(参数名)`；**Stubs 表桩体会被静默忽略** |
 
 **最容易犯的错**：函数是高级桩，却写了普通桩桩体 → 导入成功、执行全挂在默认值（一轮用例几乎全废）。
@@ -128,22 +128,22 @@ P8 交付物与文档
 
 | 变量 | 方向 | 说明 |
 |---|---|---|
-| `DAL_Get_Gear_HallData()` | IN | 结构体返回值容器 |
-| `DAL_Get_Gear_HallData().alpha_angle` | IN | 返回值成员（被测代码用到的成员才出现） |
-| `DAL_Get_Gear_HallData().beta_angle` | IN / IRRELEVANT | 未用到的成员可能是 IRRELEVANT，不用给 |
-| `DAL_Tim_CheckTimeOut()` | IN | 标量返回值 |
-| `DAL_Tim_CheckTimeOut(lastTime)` / `(currentTime)` / `(timeout)` | OUT | **函数参数会被校验**，要给期望值（即使它被标成 OUT） |
+| `DAL_Get_Data()` | IN | 结构体返回值容器 |
+| `DAL_Get_Data().alpha_angle` | IN | 返回值成员（被测代码用到的成员才出现） |
+| `DAL_Get_Data().beta_angle` | IN / IRRELEVANT | 未用到的成员可能是 IRRELEVANT，不用给 |
+| `DAL_Tim_CheckTimeout()` | IN | 标量返回值 |
+| `DAL_Tim_CheckTimeout(lastTime)` / `(currentTime)` / `(timeout)` | OUT | **函数参数会被校验**，要给期望值（即使它被标成 OUT） |
 | `E2E_CalcCrc()` | IN | 返回值 |
 | `E2E_CalcCrc(nBytes)` | OUT（常见） | 参数期望值（长度 2 就要给 2） |
 | `E2E_CalcCrc(message)` | IN(targetPassing=OUT) | 指针参数，需要给列（值可 0） |
-| `appl_get_gear_position().x` | IN | **本地函数**高级桩的结构体返回成员 |
+| `demo_get_position_local().x` | IN | **本地函数**高级桩的结构体返回成员 |
 
 规则总结：
 
 - **返回值 → IN**（测试数据给"桩的返回值"）；
 - **参数 → IN/OUT 都要给值**（TESSY 用它校验实际调用参数；缺了会 notok 或 object not executable）；
 - **未使用成员 → IRRELEVANT**（可忽略）；
-- 指针/数组参数：高级桩对"指向数组的指针"支持有限，优先用被测对象的全局变量（如 `Gear_Hall_Cal_Data.caldata.data[]`）间接控制。
+- 指针/数组参数：高级桩对"指向数组的指针"支持有限，优先用被测对象的全局变量（如 `Demo_Cal_Data.caldata.data[]`）间接控制。
 
 ### 3.3 需要用户手工建桩时：发出"建桩请求"（固定模板）
 
@@ -153,15 +153,15 @@ TIE 配置存在工程数据库里、**没有 CLI**，所以这一步必须请�
 ```text
 请在 TESSY 的 TIE（Test Interface Editor）里为下列测试对象建桩，建完告诉我，我来生成用例：
 
-测试对象：appl_gear_control_task
-  1) DAL_Tim_CheckTimeOut        → 建 Advanced Stub（返回值用于控制超时分支）
-  2) DAL_Tim_GetCurrentTime      → 建 Advanced Stub（返回值 uint16）
-  3) DAL_Get_Gear_HallData       → 建 Advanced Stub（结构体返回，alpha/beta 用于分支）
-测试对象：appl_calc_gear_lever_pos
-  4) appl_get_gear_position（Local Functions 里的本地函数）→ 建 Advanced Stub
-测试对象：appl_gear_calibration_init
+测试对象：demo_gear_task
+  1) DAL_Tim_CheckTimeout        → 建 Advanced Stub（返回值用于控制超时分支）
+  2) DAL_Tim_GetTime      → 建 Advanced Stub（返回值 uint16）
+  3) DAL_Get_Data       → 建 Advanced Stub（结构体返回，alpha/beta 用于分支）
+测试对象：demo_calc_lever_pos
+  4) demo_get_position_local（Local Functions 里的本地函数）→ 建 Advanced Stub
+测试对象：demo_calibration_init
   5) E2E_CalcCrc                 → 建 Advanced Stub
-测试对象：appl_get_gear_hall_shiftleverfault
+测试对象：demo_shift_fault_check
   6) DAL_Get_Hall_Gear_Diag_Err  → 建 Advanced Stub
 
 类型说明：
@@ -203,7 +203,7 @@ TDE 打开会报 **"The test object's interface is incomplete."**（Inputs/Outpu
 
 | 标记 | 含义 | 用途 |
 |---|---|---|
-| `i` | IN | 把 IRRELEVANT 的静态变量变成可输入（例：`AppGearPose.x` → 覆盖率从 25% 到 100%） |
+| `i` | IN | 把 IRRELEVANT 的静态变量变成可输入（例：`DemoPose.x` → 覆盖率从 25% 到 100%） |
 | `o` | OUT | 设成输出 |
 | **`x`** | **IRRELEVANT** | **让指针参数/无法断言的成员失效（见下）** |
 
@@ -245,8 +245,8 @@ TDE 打开会报 **"The test object's interface is incomplete."**（Inputs/Outpu
 生成目录里出现 `ts_p_ts_harness_stubs_<module>.c`，日志有
 `[UCE] Missing stub code for function 'xxx' using pointer parameter`。
 
-根因：模块源文件列表里额外挂了一个手写桩源文件（如 `baseline_startup\ts_harness_stubs_gear.c`），
-里面**已经定义**了 `DAL_Tim_GetCurrentTime/DAL_eeprom_Read/E2E_CalcCrc/...` →
+根因：模块源文件列表里额外挂了一个手写桩源文件（如 `baseline_startup\ts_harness_stubs_demo.c`），
+里面**已经定义**了 `DAL_Tim_GetTime/DAL_eeprom_Read/E2E_CalcCrc/...` →
 TESSY 链接的是它，用例级桩体被完全忽略。
 
 修法：
@@ -289,7 +289,7 @@ TESSY 链接的是它，用例级桩体被完全忽略。
    - 开 `Execute testcases separately` → 期望 = 静态初值（如 0）；
    - 不开 → 用 `*none*`（不校验）。
 3. **不要留空单元格**：输入为空非法；需要"不校验"就写 `*none*`。
-4. **函数 static 变量**（如 `lastValidGearPos`、`startupInvalidMaskCnt`）在独立执行时每个用例重置；
+4. **函数 static 变量**（如 `lastValidPos`、`startupInvalidMaskCnt`）在独立执行时每个用例重置；
    需要状态演进 → 用**多测试步**（`tc1.1`、`tc1.2`…），并在每一步**显式给上一步的状态**作为输入。
 5. 一个对象用例数 ≥ 分支数；先跑通再谈覆盖率。
 6. 描述里写清"分支 + 期望依据"，方便评审追溯。
@@ -299,7 +299,7 @@ TESSY 链接的是它，用例级桩体被完全忽略。
 用 `scripts/gen_cases.py`（读 JSON 用例规格 → 基于导出模板生成 XLSX → 导入 → 回读校验）：
 
 ```powershell
-& $PY scripts\gen_cases.py --spec cases\appl_calc_gear_lever.json
+& $PY scripts\gen_cases.py --spec cases\demo_calc_lever.json
 ```
 
 JSON 规格格式见 `scripts/gen_cases.py` 文件头注释：支持
@@ -343,7 +343,7 @@ JSON 规格格式见 `scripts/gen_cases.py` 文件头注释：支持
 
 ```powershell
 & $TESSY_CMD exec-test -o $WORK\reports $WORK\run.tbs
-& $PY scripts\run_batch.py --tbs $WORK\run.tbs --out $WORK\reports --report Gear_UT
+& $PY scripts\run_batch.py --tbs $WORK\run.tbs --out $WORK\reports --report Demo_UT
 ```
 
 失败分诊顺序：
@@ -446,8 +446,8 @@ Tessy_UT_SWCxxx\
 
 1. 路径含空格 → TESSY 拒绝；用无空格 junction。
 2. TESSY 必须用 `explorer.exe` 启动，否则 `CreateProcess error 5`。
-3. `"TessySimu" Target not defined` → TESSY `Project Target` 与 Keil 工程 target 不同名。
-4. 执行方式三件套要一致：Keil target 调试器（J-Link/Simulator）、`Use UVSC Flash`、scatter（Flash/RAM）。
+3. `"TessySimu" Target not defined` → TESSY `Project Target` 与 uVision 工程 target 不同名。
+4. 执行方式三件套要一致：uVision target 调试器（J-Link/Simulator）、`Use UVSC Flash`、scatter（Flash/RAM）。
 5. `Failed to flash programm errno 1/9`、`uvscSetBreak errno 4` → 目标/Flash 配置问题，不是用例问题。
 6. 环境属性在 `configuration_*.ini` 与 `module.xml` 两处，模块值会被环境覆盖 → 停 TESSY、两处改、重启。
 7. Analyze 清空执行结果、清空普通桩桩体 → 顺序：改配置/TIE/源码 → Analyze → 导用例 → 执行。
@@ -457,7 +457,7 @@ Tessy_UT_SWCxxx\
 11. 空单元格会变 `*none*` → 输入必须全填，忽略用显式 `*none*`。
 12. `Execute testcases separately` 改变状态语义 → 每步显式给状态/多测试步。
 13. 期望值必须按源码公式现算。
-14. 改 `uvprojx/uvoptx` 会动用户 Keil UI 状态（目标/断点）——先关 Keil、先备份、用完清理 `.bak`。
+14. 改 `uvprojx/uvoptx` 会动用户 uVision UI 状态（目标/断点）——先关 uVision、先备份、用完清理 `.bak`。
 15. 批处理 `<testobject>`/`<module>` 无效 → 用 `<testcollection>`；只跑一个模块请用户在 GUI 里右键模块执行。
 16. **对象不可执行**（GUI：`No executable test object selected`；TDE：`interface is incomplete`）→ 查
     `testobject.xml` 的 `state_mask`：`0x…1188`+`item 0x80` 才可执行，`0x…1180`/`0x00` 不可执行 → 见 §3.5。
@@ -479,7 +479,7 @@ Tessy_UT_SWCxxx\
     `c0_data`/`c1_data` 有 reached/number/coverage。
 26. testresult XML 里 `expected_value="-"` 表示**期望值无效/未设**（不是空值）；批量特征化时把 expected 改成 actual 再导入。
 27. RS（结果显著性）要求至少一个**被求值的期望结果**；call trace 不算、`*none*` 也不算 → `static void` 且无输出状态的对象 RS 必为 notok。
-28. 高级桩参数（如 `DAL_Tim_CheckTimeOut(lastTime)`）标成 OUT 也要给期望值，否则 notok。
+28. 高级桩参数（如 `DAL_Tim_CheckTimeout(lastTime)`）标成 OUT 也要给期望值，否则 notok。
 29. 修改共享文件（`ts_harness_stubs_*.c`、`uvprojx`、`module.xml`、工程 ini）先备份；这些文件不属于被测代码，但会改变链接行为。
 30. 导入 script 必须 **GBK/cp936** 编码；UTF-8 会静默失败。桩签名要去 `const`、补参数名、`uint8_t`→`unsigned char`。
 
@@ -507,7 +507,7 @@ Tessy_UT_SWCxxx\
     项目目录下的同名模板不生效。
 41. **Ctrl+I 之后必须再 `analyze`**：只做 Ctrl+I 时对象 mask 仍是 `0x80000088`（不可执行）；
     补一次模块级 `tessycmd analyze` 立刻变 `0x…1188`/`0x…1198`、用例 `0x…1100`。
-    实测两轮：`BSP_Dflash_UT`（3 对象）、`BSP_eeprom_UT`（5 对象）修复后都 100%/100%。
+    实测两轮：`BSP_Flash_UT`（3 对象）、`BSP_Eeprom_UT`（5 对象）修复后都 100%/100%。
     详见 `references/ida-data-validity-playbook.md` §2.1。
 42. **判断"数据模型空"的 signature**：`export -format yaml` 的 `Values:` 只有 `- []` `- []` `- [tc1.1]`
     （无表头/变量行）。此时 xlsx/script 导入都无效，只能走「Ctrl+I → analyze → xlsx 填值」。
@@ -519,7 +519,7 @@ Tessy_UT_SWCxxx\
     `intN_t*`→`signed char/short/long`；结构体/枚举指针直接选同名类型。
 45. **指针参数被"解引用读写"时不能传 NULL**：只读（`PduInfo->length`、`sdu[i]`）可以；
     读写（`tmpData=*data; *data=...;`）→ 执行必崩（`exit code 6`），必须 IDA 或有效地址。
-    实测 `BSP_TJA1145_Send(uint16_t *data)`。
+    实测 `BSP_Ext_Send(uint16_t *data)`。
 46. **遗留自动用例可能把大整数当数组下标**：如 `g_rightRollerQueueHead=90` 而数组只有 `[0..63]` →
     `queue[90]=x` 越界写 → slave `exit code 6`，且会挡住整个模块的 Execute。修数据前先看数组/指针入参范围。
     无参数函数的用例区分技巧：拿一个**纯输入全局**（只读不写）当"用例选择码"，桩体按码切换返回序列。
@@ -532,15 +532,15 @@ Tessy_UT_SWCxxx\
     - `Values` 只有 `- []` `- []`（无表头）= 数据模型空 → 必须 GUI Ctrl+I → analyze → xlsx 填值；
     - `Values` **有表头/变量行**、但普通桩桩体全空 = 只是数据不完整 → **不用 GUI**，
       直接 export xlsx 补齐"每条用例×每个桩"的桩体 + 参数值 → import → mask 立刻变 `0x…1188`
-      （`DAL_Dflash_UT` 3 对象实测，执行 3/3 全 100%）。
+      （`DAL_Flash_UT` 3 对象实测，执行 3/3 全 100%）。
     即 `0x1000` = "值 + 桩体都齐"，数据模型已有列时 xlsx 导入就足以把该位写出来。
 50. **mask 只有 `0x88`（没有数据模型的"半损坏"对象）也能救活，不用删对象、不用 Ctrl+I**：
     TDE 里接口树能显示但无编辑列、`Ctrl+I` 无反应、普通 `import` 报 `[IMPEX] Failed to import` 时：
-    手工造最小 xlsx（列名 = 接口元素路径，如 `s_gearHallDataType.alpha_angle`；第 2 行方向 `i`/`o`；
+    手工造最小 xlsx（列名 = 接口元素路径，如 `s_demoDataType.alpha_angle`；第 2 行方向 `i`/`o`；
     第 3 行起用例值）→ **`tessycmd import -append -set-passing <file.xlsx>`** → mask 变 `0x1188`；
-    再普通 `import` 一次覆盖成干净用例即可（`DAL_GearControl_UT/DAL_Get_Gear_HallData`：0x88 → 0x1188）。
+    再普通 `import` 一次覆盖成干净用例即可（`DAL_Demo_UT/DAL_Get_Data`：0x88 → 0x1188）。
 51. **补桩顺序：先分支设计、后补默认桩体**。若先按返回类型"批量补桩"，会把**逐用例桩返回值**同质化成固定值，
-    覆盖率从 100% 掉到 10~12%（`DAL_updateGearPositiondata_Task` 实测）。改完必须回读 yaml `Stubs:` 确认逐用例值还在。
+    覆盖率从 100% 掉到 10~12%（`DAL_updatePosition_Task` 实测）。改完必须回读 yaml `Stubs:` 确认逐用例值还在。
 52. **`if / else if` 链的"两假"分支需要一条非法值用例**：只取合法值（0/1）时第二个条件被短路，永远不求值 → C1 卡在
     比如 87.50%（8 分支缺 1）。加 `ReadStep=99` 这类既不等于 A 也不等于 B 的用例即可补满。
 53. **指针参数只认 IDA 变量名**：填 `NULL` → 执行卡死（硬故障）；填裸全局名 → 静默变 0；填 `&全局名` →
@@ -570,8 +570,8 @@ Tessy_UT_SWCxxx\
   - `scripts/run_batch.py`：生成 tbs → 执行 → 解析报告；
   - `scripts/inspect_detail.py`：打印失败用例的 actual/expected；
   - **`scripts/fill_ida_pointer.py`**：指针参数 + IDA 变量的分支取值批量写入
-    （`python fill_ida_pointer.py examples/can_controller_rx_handler_ida.json`，导入后自动校验 `state_mask`）；
-    示例规格：`examples/can_controller_rx_handler_ida.json`、`examples/can1_controller_rx_handler_ida.json`。
+    （`python fill_ida_pointer.py examples/can_rx_handler_ida.json`，导入后自动校验 `state_mask`）；
+    示例规格：`examples/can_rx_handler_ida.json`、`examples/can1_rx_handler_ida.json`。
   - **`scripts/fill_values_stubs.py`**：无分支直线调用模块的"参数值 + 普通桩桩体"批量写入
     （`python fill_values_stubs.py examples/bsp_eeprom_ut_fix.json`，导入后自动打印每个对象的 `state_mask`）；
-    示例规格：`examples/bsp_eeprom_ut_fix.json`、`examples/bsp_dflash_ut_fix.json`。
+    示例规格：`examples/bsp_eeprom_ut_fix.json`、`examples/bsp_flash_ut_fix.json`。

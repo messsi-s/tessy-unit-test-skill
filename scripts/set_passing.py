@@ -10,11 +10,11 @@ Typical uses
 ------------
 1) Make an IRRELEVANT static variable controllable (IRRELEVANT -> IN):
        python set_passing.py --collection "New Test Collection" --module M --object O \
-              --column AppGearPose.x --direction i
+              --column DemoPose.x --direction i
 2) Neutralise a struct-pointer parameter that breaks the interface
    (IN -> IRRELEVANT). Pointer parameters have no INOUT in TESSY 5.1:
        python set_passing.py ... --column msg --direction x \
-              --object appl_steerwheel_update_sig_tx_mfsl
+              --object demo_signal_tx
 
 The script exports the current data, updates/creates the column's direction row,
 imports with -set-passing, then re-exports the interface XML so you can verify.
@@ -32,7 +32,7 @@ import xml.etree.ElementTree as ET
 
 import openpyxl
 
-DEFAULT_CMD = r'D:\tessy\Razorcat\TESSY_5.1\bin\tessycmd.exe'
+DEFAULT_CMD = r'D:\tessy\TESSY_5.1\bin\tessycmd.exe'
 
 
 def sh(cmd, *args):
@@ -58,7 +58,7 @@ def main():
     ap.add_argument('--collection', required=True)
     ap.add_argument('--module', required=True)
     ap.add_argument('--object', required=True)
-    ap.add_argument('--column', required=True, help='interface element name, e.g. msg or AppGearPose.x')
+    ap.add_argument('--column', required=True, help='interface element name, e.g. msg or DemoPose.x')
     ap.add_argument('--direction', required=True, choices=['i', 'o', 'x'],
                     help='i=IN, o=OUT, x=IRRELEVANT')
     a = ap.parse_args()

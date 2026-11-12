@@ -2,7 +2,7 @@
 
 Usage:
     python inspect_interface.py                 # all objects
-    python inspect_interface.py appl_a appl_b   # given objects
+    python inspect_interface.py demo_a demo_b   # given objects
 
 Data sources:
     CSV export   -> interface variable names + direction (i/o)

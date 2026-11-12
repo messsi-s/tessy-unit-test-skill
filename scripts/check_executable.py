@@ -49,7 +49,7 @@ def scan(persist, only_not_exec=False, module_dir=None):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--persist', required=True,
-                    help=r'e.g. D:\T1V_Tessytest\tessy\persist\tessy\project')
+                    help=r'e.g. D:\Demo_Tessytest\tessy\persist\tessy\project')
     ap.add_argument('--module', default=None, help=r'module dir like 4\1E')
     ap.add_argument('--only-not-executable', action='store_true')
     a = ap.parse_args()

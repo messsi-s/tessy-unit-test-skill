@@ -69,7 +69,7 @@ $TESSY_CMD = & "$env:TESSY_BIN\tessycmd.exe"
     <operation key="generateBatchReport">
       <options>
         <option key="reportOutputDirectory" value="C:\path\to\reports"/>
-        <option key="reportFileNamePattern" value="Gear_UT_Report"/>
+        <option key="reportFileNamePattern" value="Demo_UT_Report"/>
         <option key="reportOutputFormat" value="xml"/>
       </options>
       <arguments>
@@ -99,7 +99,7 @@ $TESSY_CMD = & "$env:TESSY_BIN\tessycmd.exe"
     <statistic total="45" ok="45" notok="0" notexecuted="0"/>
   </summary>
   ...
-  <tessyobject type="testobject" name="appl_xxx">
+  <tessyobject type="testobject" name="demo_xxx">
     <testcase_statistics total="11" ok="11" notok="0" notexecuted="0"/>
   </tessyobject>
 </report>
@@ -109,18 +109,18 @@ $TESSY_CMD = & "$env:TESSY_BIN\tessycmd.exe"
 
 | 文件 | 说明 |
 |---|---|
-| `%APPDATA%\Razorcat\TESSY\5.1.10\config\configuration_*.ini` | TEE 环境属性（编译器/目标/调试/覆盖率等）。备份后编辑，**先停 TESSY** |
+| `%APPDATA%\TESSY\5.1.10\config\configuration_*.ini` | TEE 环境属性（编译器/目标/调试/覆盖率等）。备份后编辑，**先停 TESSY** |
 | `<project>\persist\tessy\project\<x>\<y>\module.xml` | 模块属性（排除列表、Project Target、Use UVSC Flash 等）。模块值会被环境值覆盖 → **两处一起改** |
 | `<project>\persist\tessy\project\<x>\<y>\.idb\current\*.xml` | 接口 IDB（只读参考，勿手改） |
 | `<project>\persist\tessy\project\<x>\<y>\.tdb\<n>\testresult_*.xml` | 历史执行结果（含 interfaceReport/stub 类型，排错用） |
 
-## 典型执行环境属性（Keil/uVision）
+## 典型执行环境属性（uVision/uVision）
 
 | 属性 | 硬件执行 | 仿真执行 |
 |---|---|---|
 | `Project File` | `$(PROJECTROOT)\...\xxx.uvprojx` | 同左 |
-| `Project Target` | 与 Keil 中 J-Link target 同名 | 与 Keil 中 Simulator target 同名 |
-| `Target Install Path` | `C:\Keil_v5\UV4` | 同左 |
+| `Project Target` | 与 uVision 中 J-Link target 同名 | 与 uVision 中 Simulator target 同名 |
+| `Target Install Path` | `C:\uVision\UV4` | 同左 |
 | `Use UVSC Flash` | `true`（Flash 下载） | `false`（或改 RAM 调试） |
 | `Scatter File` / `Startup File` / `System File` | 指向项目实际文件 | 同左 |
 | `TESSYTHCmd` | `$(Target Install Path)\UV4.exe "$(Project File)" -s $(Port) -t"$(Project Target)"` | 同左 |

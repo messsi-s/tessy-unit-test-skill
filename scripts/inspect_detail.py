@@ -2,7 +2,7 @@
 
 Usage:
     python inspect_detail.py                       # all objects
-    python inspect_detail.py appl_get_gearshift_position
+    python inspect_detail.py demo_get_position
     python inspect_detail.py --all                 # include not-executed cases
 
 Reading the result:

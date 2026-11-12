@@ -1,4 +1,4 @@
-# TESSY 5.1 数据有效性（state_mask）与 IDA 指针参数实战手册
+﻿# TESSY 5.1 数据有效性（state_mask）与 IDA 指针参数实战手册
 
 > 本文件是 2026-11 在 `BSP_Can_UT`（`BSP_can.c`，13 个测试对象）上把 13/13 做到
 > C0/C1 = 100% 时踩出来的完整结论。**任何"对象明明有数据却 not executable"的问题，
@@ -51,7 +51,7 @@
 >
 > **③ 和 ⑤ 缺一不可**：Ctrl+I 只重建数据模型（让 `Values` 有表头/列），
 > 但对象 mask 仍是 `0x80000088`；再跑一次 `analyze` 才会把 `0x1000`/`0x100` 写回去，
-> 变成可执行的 `0x…1188`/`0x…1198`。2026-11 在 `BSP_Dflash_UT`、`BSP_eeprom_UT` 上各验证一次。
+> 变成可执行的 `0x…1188`/`0x…1198`。2026-11 在 `BSP_Flash_UT`、`BSP_Eeprom_UT` 上各验证一次。
 
 ### 2.1 数据模型被写成空表后的修复三步（`Values` 只有 `[] []`）
 
@@ -77,7 +77,7 @@ Values:
 3) 再 export xlsx → 填参数值 + 普通桩桩体 → import → 回读 mask 应为 0x…1188/0x…1198
 ```
 
-实测（`BSP_Dflash_UT` 3 对象 / `BSP_eeprom_UT` 5 对象）：
+实测（`BSP_Flash_UT` 3 对象 / `BSP_Eeprom_UT` 5 对象）：
 只做 Ctrl+I 时 mask 仍 `0x80000088`；补一次 `analyze` 立刻变
 `0x80001188`（用例 `0x80001100`）→ 填数据导入 → 执行 → **C0/C1 全 100%**。
 
@@ -88,7 +88,7 @@ Values:
 | yaml `Values:` 只有 `- []` `- []` `- [tc1.1]`（**没有表头行**） | 数据模型本身是空的 | 只能 GUI `Ctrl+I` → `analyze` → xlsx 填值（§2.1） |
 | yaml `Values:` **有表头/变量行**，但所有**普通桩桩体为空** | 桩体不全 → 数据被判不完整 | **不需要 GUI**：`export xlsx` → 给每条用例×每个普通桩填桩体（`(void)0;` / `return 0u;`）→ `import` → mask 立刻变 `0x…1188` |
 
-实测（`DAL_Dflash_UT` 3 对象）：`Values` 本来就有 `Erase_Address` / `Write_Address` / `Read_Address` 等列，
+实测（`DAL_Flash_UT` 3 对象）：`Values` 本来就有 `Erase_Address` / `Write_Address` / `Read_Address` 等列，
 但桩体全空、mask `0x80000088`；仅用 xlsx 补齐桩体 + 参数值后导入，mask 直接变 `0x80001188`，
 **没有做任何 Ctrl+I**，随后执行 3/3 全 100%。
 
@@ -97,11 +97,11 @@ Values:
 
 ### 2.3 第三种：mask 只有 `0x88` 的"半损坏"对象 —— `import -append -set-passing` 复活
 
-**症状**（`DAL_GearControl_UT / DAL_Get_Gear_HallData` 实测）：
+**症状**（`DAL_Demo_UT / DAL_Get_Data` 实测）：
 
 - `mask=0x88`（连 `0x1000`、`0x80000000`、`0x20000000000` 都没有），同模块其他对象是 `0x0002000000001188`；
 - 用例是占位 `name="Dummy" state_mask="0x00"`；
-- TDE 里能看到接口树（`Globals → s_gearHallDataType`、`Return → GEAR_HALL_DATA_TYPE`）但**没有任何可编辑列**；
+- TDE 里能看到接口树（`Globals → s_demoDataType`、`Return → DEMO_DATA_TYPE`）但**没有任何可编辑列**；
 - `Ctrl+I` 无反应/被禁用；`export xlsx` 只有 1 列（行号列）；
 - 普通 `import` 报 `[IMPEX] Failed to import test object '...'`；
 - `import -set-passing`（不带 `-append`）不报错但 mask 不变。
@@ -113,8 +113,8 @@ Values:
 ```python
 # 1) 手工造最小 xlsx：列名 = 接口元素路径（用 details XML 里的 member 名）
 #    Values 表：第 1 行元素名，第 2 行方向 i/o/x，第 3 行起用例值
-cols = [('s_gearHallDataType.alpha_angle', 'i', '100'),
-        ('s_gearHallDataType.beta_angle',  'i', '200')]
+cols = [('s_demoDataType.alpha_angle', 'i', '100'),
+        ('s_demoDataType.beta_angle',  'i', '200')]
 # 2) 关键：-append + -set-passing 一起用
 #    tessycmd import -append -set-passing hall.xlsx      -> mask 0x88 变 0x1188，数据列出现
 # 3) 再普通 import 一次（覆盖成干净用例，避免 append 出的重复用例）
@@ -134,7 +134,7 @@ cols = [('s_gearHallDataType.alpha_angle', 'i', '100'),
 被测函数形如：
 
 ```c
-static void CAN_Controller_Rx_handler(can_msgbuff_t *canMsg)
+static void CAN_Rx_Handler(can_msgbuff_t *canMsg)
 {
     if ((canMsg->msgId == NPD_UID_PHYS) || (canMsg->msgId == NPD_UID_FUNC)) { ... }
     else { for (...) { ... } if (msgId 是网络管理帧) {...} else {...} }
@@ -172,13 +172,13 @@ New Variable 对话框的 Type 列表只有 **C 基本类型 + Enums + Structs a
 | `_Bool *` | `_Bool` |
 | 结构体/枚举指针（`can_msgbuff_t *`、`gpio_pin_level_t *`） | 列表里直接有该结构体/枚举，选它 |
 
-实测：`BSP_TJA1145_Send(uint16_t *data)` 的 `data` 用 `unsigned short` 建 IDA（名 `target_data`）后，
+实测：`BSP_Ext_Send(uint16_t *data)` 的 `data` 用 `unsigned short` 建 IDA（名 `target_data`）后，
 数据模型出现 `target_data`（输入）与 `target_data`（输出期望）两列，执行 100%。
 
 #### 3.2.2 ⚠️ 指针参数被"解引用读写"时，传 `NULL` 必崩
 
 - 只**读**指针（如 `PduInfo->length`、`sdu[i]`）：给 `NULL` 或裸地址有时能跑（桩不访问就没事）。
-- **读写**指针（如 `BSP_TJA1145_Send` 里 `tmpData=*data; ... *data=...;`）：
+- **读写**指针（如 `BSP_Ext_Send` 里 `tmpData=*data; ... *data=...;`）：
   `data = NULL` → 目标机直接异常退出（`terminated with exit code 6`），
   **必须**用 IDA 变量或有效地址，不能图省事写 `NULL`。
 
@@ -198,7 +198,7 @@ canMsg = target_canMsg      ← 正确（不是地址 0x20010000）
 ```
 > 实测坑：同一模块里 CAN0 的变量叫 `target_canMsg`、CAN1 的叫 **`target_canMsg1`**。
 > 两者都填成 `target_canMsg` 时，CAN1 的驱动生成代码是
-> `TESSY_address_vector_defaultdefault[1] = (void *)&target_canMsg;`
+> `TESSY_address_…[1] = (void *)&target_canMsg;`
 > → 编译报 **`identifier "target_canMsg" is undefined`**。
 > **务必用 `export -format xml` 查 `<var nam="...">` 的实际名字。**
 
@@ -221,11 +221,11 @@ CAN1 版本（`CAN1NMID=0x67E`）：`0x758/8`、`0x7DF/8`、`0x626/8`、`0x123/8
 ### 3.6 批量填写脚本骨架（XLSX，安全）
 
 > 已封装成可直接运行的脚本：`scripts/fill_ida_pointer.py`，
-> 配套示例 `examples/can_controller_rx_handler_ida.json`、
-> `examples/can1_controller_rx_handler_ida.json`：
+> 配套示例 `examples/can_rx_handler_ida.json`、
+> `examples/can1_rx_handler_ida.json`：
 >
 > ```powershell
-> python scripts\fill_ida_pointer.py examples\can_controller_rx_handler_ida.json
+> python scripts\fill_ida_pointer.py examples\can_rx_handler_ida.json
 > # 输出：[auto] IDA 变量名 / [import] ok / [mask] object=0x80001188 testcase=0x80001100 -> OK 可执行
 > ```
 >
@@ -233,14 +233,14 @@ CAN1 版本（`CAN1NMID=0x67E`）：`0x758/8`、`0x7DF/8`、`0x626/8`、`0x123/8
 
 ```python
 import openpyxl, subprocess, os
-TESSY = r'D:\tessy\Razorcat\TESSY_5.1\bin\tessycmd.exe'
+TESSY = r'D:\tessy\TESSY_5.1\bin\tessycmd.exe'
 VAR = 'target_canMsg'          # ← 用 export xml 里 <var nam=...> 的真实名字
-obj = 'CAN_Controller_Rx_handler'
+obj = 'CAN_Rx_Handler'
 plan = [('0x758', 8, '1'), ('0x7DF', 8, '0'), ('0x758', 8, '0'),
         ('0x67E', 0, '0'), ('0x626', 8, '0'), ('0x123', 8, '0'), ('0x7DF', 8, '1')]
 
 sh = lambda *a: subprocess.run([TESSY]+list(a), capture_output=True, text=True).stdout
-for c in (('connect',), ('select-project','T1V_test'), ('select-test-collection','New Test Collection'),
+for c in (('connect',), ('select-project','Demo_test'), ('select-test-collection','New Test Collection'),
           ('select-module','-test-collection','BSP_Can_UT'), ('select-test-object', obj)):
     sh(*c)
 sh('export','-format','xlsx','-file',obj,WORK)
@@ -272,8 +272,8 @@ sh('import', p)      # xlsx 导入不破坏有效性
 ```c
 case CAN_EVENT_RX_COMPLETE:
     while (CAN_REG_IsRxFifoEmpty(CAN0_REGBASE) == false)   /* 需要先 0 后 1 */
-    { (void)CAN_Receive(instance, &CAN0_Receivebuff);
-      CAN_Controller_Rx_handler(&CAN0_Receivebuff); }
+    { (void)CAN_Receive(instance, &CAN_Rx_Buffer);
+      CAN_Rx_Handler(&CAN_Rx_Buffer); }
 ```
 
 TESSY 5.1 的高级桩只能给**一个**固定返回值：
@@ -344,7 +344,7 @@ CID 就此丢失、对象又变不可执行。
    c. **再跑一次 `tessycmd analyze`**（漏这步 mask 停在 0x80000088，见 §2.1）
    d. 再跑 check_executable.py，确认 0x…1188 / 0x…1198
 3) 导出 xlsx → 用脚本填值（指针=IDA变量名；msgId/dataLen/cs/data；普通桩桩体）
-   `python scripts\fill_ida_pointer.py examples\can_controller_rx_handler_ida.json`
+   `python scripts\fill_ida_pointer.py examples\can_rx_handler_ida.json`
 4) import xlsx → 再 check_executable（确认仍有效）   ← fill_ida_pointer.py 已自动做这步校验
 5) 关闭 TESSY(选 No) → 重开 → 右键模块 Execute
 6) 读覆盖率：work\<mod>\<obj#>\ts_c0_*.txt / ts_c1_*.txt 的 C0-COVERAGE / C1-COVERAGE
@@ -357,37 +357,37 @@ CID 就此丢失、对象又变不可执行。
 | 对象 | C0 | C1 | 关键动作 |
 |---|---|---|---|
 | BSP_CAN0_Init / BSP_CAN1_Init / BSP_CAN_TxByInstance | 100% | 100% | 常规用例 |
-| CAN_Controller_Busoff_handler / CAN_Controller_Tx_handler | 100% | 100% | 常规用例 |
+| CAN_Busoff_Handler / CAN_Tx_Handler | 100% | 100% | 常规用例 |
 | CAN_GetTxInstanceByHth / Can_SetControllerMode / UDS_Datalink_TransmitRequest | 100% | 100% | 常规用例 |
 | BSP_Can_Write | 100% | 100% | IDA `target_PduInfo` + `length=8` + `CAN_Send` 返回 0/1/2/3/5 |
 | CAN0_IRQCallback / CAN1_IRQCallback | 100% | 100% | 11 条事件用例 + `CAN_REG_IsRxFifoEmpty` 改普通桩 + 计数器桩体 |
-| CAN_Controller_Rx_handler | 100% | 100% | IDA `target_canMsg` + Ctrl+I + 7 条 msgId 用例 |
+| CAN_Rx_Handler | 100% | 100% | IDA `target_canMsg` + Ctrl+I + 7 条 msgId 用例 |
 | CAN1_Controller_Rx_handler | 100% | 100% | IDA **`target_canMsg1`** + Ctrl+I + 6 条 msgId 用例 |
 
 ### 8.1 数据模型为空型（`0x80000088`）——Ctrl+I + Analyze 两步修复
 
 | 模块 / 对象 | 状态 | C0 | C1 | 关键动作 |
 |---|---|---|---|---|
-| BSP_Dflash_UT（3 对象：Erase_Page / Write / Read） | 原 `0x80000088` 全部不可执行 | 100% | 100% | Ctrl+I（GUI，3 个对象）→ `tessycmd analyze` → mask `0x80001188` → 填 `Erase/Write/Read_Address=0x00010000`、`length=8/0`、指针 `NULL`、普通桩桩体（`FLASH_Unlock/Lock`→`(void)0;`、`FLASH_ErasePage/ProgramSection`→`return 0u;`）→ import → Execute |
-| BSP_eeprom_UT（5 对象：JobErrorNotification / Init / Write / Read / MainFunction） | 原 `0x80000088`（Write/Read） | 100% | 100% | Ctrl+I → `analyze`（5 对象全变 `0x…1198`/`0x…1188`）→ 填 `blockId/offset/length/dataBuffer=NULL/buffer=NULL` + 普通桩桩体（`FLASH_Eeprom_*`→`return 0u;`，void 的 `FLASH_Eeprom_MainFunction`→`(void)0;`）→ import → Execute |
+| BSP_Flash_UT（3 对象：Erase_Page / Write / Read） | 原 `0x80000088` 全部不可执行 | 100% | 100% | Ctrl+I（GUI，3 个对象）→ `tessycmd analyze` → mask `0x80001188` → 填 `Erase/Write/Read_Address=0x00010000`、`length=8/0`、指针 `NULL`、普通桩桩体（`FLASH_Unlock/Lock`→`(void)0;`、`FLASH_ErasePage/ProgramSection`→`return 0u;`）→ import → Execute |
+| BSP_Eeprom_UT（5 对象：JobErrorNotification / Init / Write / Read / MainFunction） | 原 `0x80000088`（Write/Read） | 100% | 100% | Ctrl+I → `analyze`（5 对象全变 `0x…1198`/`0x…1188`）→ 填 `blockId/offset/length/dataBuffer=NULL/buffer=NULL` + 普通桩桩体（`FLASH_Eeprom_*`→`return 0u;`，void 的 `FLASH_Eeprom_MainFunction`→`(void)0;`）→ import → Execute |
 
 > 这两个模块的函数都是**无分支直线调用**（`FLASH_Unlock → FLASH_ErasePage → FLASH_Lock` 这类），
 > 所以修复后自然 100%；难点**只在数据有效性**，不在用例设计。
 > 桩体注意：`void` 函数的普通桩桩体写 `(void)0;`，非 void 写 `return 0u;`（按返回类型）。
 
-### 8.2 分支覆盖 + 越界数据 + IDA 基本类型（BSP_GPIO_UT / BSP_SPI_UT）
+### 8.2 分支覆盖 + 越界数据 + IDA 基本类型（BSP_Gpio_UT / BSP_Spi_UT）
 
 | 模块 / 对象 | 原问题 | C0 | C1 | 关键动作 |
 |---|---|---|---|---|
-| BSP_GPIO_UT / GPIOB_IRQHandler | `0x80000088`，`Values` 空表 | 100% | 100% | Ctrl+I → `analyze` → 5 条用例：`g_rightRollerQueueTail`(纯输入全局) 当**用例选择码** 0..4；`GPIO_GetPinIntFlag` 桩按码返回 1,0 / 0,1；`GPIO_ReadPin` 桩按码返回 低,高 / 高,高 → 左/右 × 判定真/假 四分支全覆盖 |
-| BSP_GPIO_UT / 4 个 Push/Pop 对象 | 自动生成用例把 **90** 当下标 → `queue[90]` 越界写 → **slave exit code 6** | 100% | 100% | 改成合法数据：Push `head=0,tail=0/1`（写/队列满）；Pop `head/tail=0/1`、`queue[0]=7`（非空/空） |
-| BSP_SPI_UT / 5 对象 | 桩体全空（`MissingStubCode`）；`TJA1145_Send` 的 `data=NULL` 被解引用读写 → 崩 | 100% | 100% | 桩体按返回类型补（`SPI_MasterInit`/`SPI_MasterTransferBlocking`→`return 0u;`、`GPIO_*`→`(void)0;`）；`TJA1145_Send` 的 `uint16_t *data` 建 IDA（类型选 **`unsigned short`**，名 `target_data`）→ Ctrl+I+Analyze → `data=target_data`、`target_data=0x1234`、期望 `ERR_SUCCESS`/`0` |
+| BSP_Gpio_UT / GPIOB_IRQHandler | `0x80000088`，`Values` 空表 | 100% | 100% | Ctrl+I → `analyze` → 5 条用例：`g_rightRollerQueueTail`(纯输入全局) 当**用例选择码** 0..4；`GPIO_GetPinIntFlag` 桩按码返回 1,0 / 0,1；`GPIO_ReadPin` 桩按码返回 低,高 / 高,高 → 左/右 × 判定真/假 四分支全覆盖 |
+| BSP_Gpio_UT / 4 个 Push/Pop 对象 | 自动生成用例把 **90** 当下标 → `queue[90]` 越界写 → **slave exit code 6** | 100% | 100% | 改成合法数据：Push `head=0,tail=0/1`（写/队列满）；Pop `head/tail=0/1`、`queue[0]=7`（非空/空） |
+| BSP_Spi_UT / 5 对象 | 桩体全空（`MissingStubCode`）；`Ext_Send` 的 `data=NULL` 被解引用读写 → 崩 | 100% | 100% | 桩体按返回类型补（`SPI_MasterInit`/`SPI_MasterTransferBlocking`→`return 0u;`、`GPIO_*`→`(void)0;`）；`Ext_Send` 的 `uint16_t *data` 建 IDA（类型选 **`unsigned short`**，名 `target_data`）→ Ctrl+I+Analyze → `data=target_data`、`target_data=0x1234`、期望 `ERR_SUCCESS`/`0` |
 
 **无参数对象的用例区分技巧**：函数没有形参时，用某个**纯输入全局变量**（只被读、不被写）当
 "用例选择码"，桩体按它的值切换返回序列，并用 `static int cur` 检测"码变了就重置计数器"。
 `BSP_GPIO` 里选的是 `g_rightRollerQueueTail`（只被 Push 比较，不被写，最干净）。
 
-### 8.3 DAL 包装层（DAL_CAN_UT / DAL_Dflash_UT）
+### 8.3 DAL 包装层（DAL_CAN_UT / DAL_Flash_UT）
 
 这两个模块都是**一行透传**的 DAL 包装（`DAL_Xxx(...) { BSP_Xxx(...); }`），没有分支，
 修的都是数据完整性：
@@ -395,19 +395,19 @@ CID 就此丢失、对象又变不可执行。
 | 模块 / 对象 | 原问题 | C0 | C1 | 关键动作 |
 |---|---|---|---|---|
 | DAL_CAN_UT / DAL_Can_Write | `0x80000088`，`Values` **空表** | 100% | 100% | Ctrl+I → `analyze` → `Hth=1/2`、`PduInfo=NULL`（**本函数不解引用指针，不需要 IDA**）、桩体 `return 0;`/`return 1;` → import |
-| DAL_Dflash_UT / Erase_Page / Write / Read | `0x80000088`，但 `Values` **有列**、桩体全空 | 100% | 100% | **无需 GUI**：xlsx 补齐桩体（`BSP_Dflash_*` 均 void → `(void)0;`）+ 参数值（`*_Address=0x18000000`、`length=8/3/0`、指针 `NULL`）→ import → mask 变 `0x80001188` |
-| DAL_eeprom_UT / MainFunction / Write / Read（5 对象） | 同上，`Values` 有列、桩体空 | 100% | 100% | 同上：`BSP_eeprom_*`/`DAL_Tim_*` 桩体按返回类型补；`MainFunction` 两条用例分别让 `DAL_Tim_CheckTimeOut` 返回 1/0 覆盖 if 两侧（`EepromMainFuncTimer` 输入 0x1000、`GetCurrentTime` 返回 0x2000） |
+| DAL_Flash_UT / Erase_Page / Write / Read | `0x80000088`，但 `Values` **有列**、桩体全空 | 100% | 100% | **无需 GUI**：xlsx 补齐桩体（`BSP_Flash_*` 均 void → `(void)0;`）+ 参数值（`*_Address=0x18000000`、`length=8/3/0`、指针 `NULL`）→ import → mask 变 `0x80001188` |
+| DAL_Eeprom_UT / MainFunction / Write / Read（5 对象） | 同上，`Values` 有列、桩体空 | 100% | 100% | 同上：`BSP_eeprom_*`/`DAL_Tim_*` 桩体按返回类型补；`MainFunction` 两条用例分别让 `DAL_Tim_CheckTimeout` 返回 1/0 覆盖 if 两侧（`EepromMainFuncTimer` 输入 0x1000、`GetCurrentTime` 返回 0x2000） |
 
 > `DAL_Can_Write` 的返回值列 Ctrl+I 后没生成 → RS 可能 notok，但覆盖度正常（见 pitfalls V19）。
 
-### 8.4 分支型模块补覆盖（DAL_GearControl_UT）
+### 8.4 分支型模块补覆盖（DAL_Demo_UT）
 
 | 对象 | 起始覆盖 | 最终 | 关键动作 |
 |---|---|---|---|
-| DAL_GearControl_Init | C0 75% / C1 50% | 100% / 100% | 3 条用例：`Gear_Hall_ReadConfigSTS`(纯输入全局)=1 → 外层 if 假；=0 且 `ReadModeConfigSTS` 桩返回 `0x0F`(ALL_OK=0x1\|0x2\|0x4\|0x8) → 内层 if 真（写 EEPROM 标志，唯一未覆盖语句）；=0 且返回 0 → 内层假 |
-| DAL_updateGearPositiondata_Task | C0 10% / C1 12.5% | 100% / 100%（补第 5 条后） | 5 条用例：①`CheckTimeOut`桩=0（外层假）②=1 且 `ReadStep`=0(START_3D)③=1、`ReadStep`=1、`DIAG_STATE`=0（诊断失败）④=1、1、`DIAG_STATE`=1（成功）⑤=1、`ReadStep`=**99**（`else if` 两假，补最后一个分支） |
+| DAL_Demo_Init | C0 75% / C1 50% | 100% / 100% | 3 条用例：`Demo_ReadConfigSTS`(纯输入全局)=1 → 外层 if 假；=0 且 `ReadModeConfigSTS` 桩返回 `0x0F`(ALL_OK=0x1\|0x2\|0x4\|0x8) → 内层 if 真（写 EEPROM 标志，唯一未覆盖语句）；=0 且返回 0 → 内层假 |
+| DAL_updatePosition_Task | C0 10% / C1 12.5% | 100% / 100%（补第 5 条后） | 5 条用例：①`CheckTimeOut`桩=0（外层假）②=1 且 `ReadStep`=0(START_3D)③=1、`ReadStep`=1、`DIAG_STATE`=0（诊断失败）④=1、1、`DIAG_STATE`=1（成功）⑤=1、`ReadStep`=**99**（`else if` 两假，补最后一个分支） |
 
-> 注意坑：`DAL_GearControl_Init` 的 8 个普通桩、`updateGear` 的 5 个普通桩都要**每用例**有桩体；
+> 注意坑：`DAL_Demo_Init` 的 8 个普通桩、`updatePosition` 的 5 个普通桩都要**每用例**有桩体；
 > 先用通用脚本"按返回类型批量补"会把分支设计同质化（V23），正确顺序是**先分支设计再补默认桩**。
 
 ### 8.5 指针参数 + 桩写回（DAL_SBC_UT）

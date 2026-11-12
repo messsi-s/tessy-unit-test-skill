@@ -11,14 +11,14 @@
 | E1 | `unsupported character ' '` | TESSY 不支持路径含空格 | 建无空格目录联接/junction（如 `CodeTest`），所有 TESSY 侧路径用它 |
 | E2 | `idbmake: No rule to make target 'D:/.../Code'` | make 按空格拆分路径 | 环境 `Project File` 写无空格路径 |
 | E3 | `CreateProcess ... failed with error 5` | 从脚本/任务计划/快捷方式启动 TESSY | **只用 `explorer.exe "…\TESSY.exe"` 启动** |
-| E4 | `"TessySimu" — Target not defined in Project` | TESSY `Project Target` 与 Keil 工程 target 不同名 | 两边名字必须一致；改完 Analyze |
-| E5 | `Failed to flash programm with errno 1/9` | Keil target 是 J-Link 硬件配置但板子未连/未上电；或 `Use UVSC Flash` 与仿真模式冲突 | 硬件：J-Link + `Use UVSC Flash=true`；仿真：`uSim=1` + `Use UVSC Flash=false`；或改 RAM 调试 |
-| E6 | `Failed to create breakpoint at 'tslows_sync' errno 4` | 在 Flash 地址下断点，硬件断点不足 / FlashBP 未启 | Keil 中启 J-Link **Flash Breakpoints / Connect under reset**；或改 RAM 运行 |
+| E4 | `"TessySimu" — Target not defined in Project` | TESSY `Project Target` 与 uVision 工程 target 不同名 | 两边名字必须一致；改完 Analyze |
+| E5 | `Failed to flash programm with errno 1/9` | uVision target 是 J-Link 硬件配置但板子未连/未上电；或 `Use UVSC Flash` 与仿真模式冲突 | 硬件：J-Link + `Use UVSC Flash=true`；仿真：`uSim=1` + `Use UVSC Flash=false`；或改 RAM 调试 |
+| E6 | `Failed to create breakpoint at 'tslows_sync' errno 4` | 在 Flash 地址下断点，硬件断点不足 / FlashBP 未启 | uVision 中启 J-Link **Flash Breakpoints / Connect under reset**；或改 RAM 运行 |
 | E7 | 改了 TESSY 配置不生效/被还原 | 属性在 ini 与 module.xml 两处；模块值被环境值同步覆盖 | 停 TESSY → 两处都改 → 重启 → 验证 |
-| E8 | 改 Keil 工程后用例变灰/不可执行 | `uvprojx` 是 TESSY 跟踪的环境文件，改动使分析过期 | 改工程后 Analyze |
-| E9 | Keil 界面"变了"（目标/断点/调试设置丢失） | TESSY 跑测试会启动 uVision 并写 `uvoptx`；外部回滚 `uvoptx` 会连用户 UI 状态一起回滚 | 改工程文件前**关闭 Keil 并告知**；优先只改 TESSY 配置；备份 `.bak` 用完清理 |
+| E8 | 改 uVision 工程后用例变灰/不可执行 | `uvprojx` 是 TESSY 跟踪的环境文件，改动使分析过期 | 改工程后 Analyze |
+| E9 | uVision 界面"变了"（目标/断点/调试设置丢失） | TESSY 跑测试会启动 uVision 并写 `uvoptx`；外部回滚 `uvoptx` 会连用户 UI 状态一起回滚 | 改工程文件前**关闭 uVision 并告知**；优先只改 TESSY 配置；备份 `.bak` 用完清理 |
 | E10 | 分析报头文件/宏找不到 | 包含路径、宏未配全 | 一次性配全 `Compiler Includes` + `add-define`；改 `Target Install Path` 后检查 `$(CMSIS Path)` 引用 |
-| E11 | `-lUVSC` 找不到 | UV4 目录缺 `libUVSC.a` | 用 `dlltool` 从 `UVSC.dll` 导出生成后放 `C:\Keil_v5\UV4` |
+| E11 | `-lUVSC` 找不到 | UV4 目录缺 `libUVSC.a` | 用 `dlltool` 从 `UVSC.dll` 导出生成后放 `C:\uVision\UV4` |
 
 ---
 
@@ -43,10 +43,10 @@
 |---|---|---|---|
 | S1 | 桩体写了但无效，整组用例挂在默认值 | 函数是**高级桩**，Stubs 表桩体被**静默忽略** | 先判断桩类型：接口出现 `函数名()` 变量 = 高级桩；高级桩用 Values 变量，普通桩用 Stubs 桩体 |
 | S2 | 导入不报错但列丢了 | TESSY 对无法识别的列**静默忽略** | 每次导入后回读导出，核对列名/行数/桩体 |
-| S3 | `[IMPEX] Failed to import` | 列名不匹配（多类型名/少 `()`/拼写） | 从最新导出模板核对：`DAL_Get_Gear_HallData().alpha_angle`、`appl_get_gear_position().x`、`DAL_Tim_CheckTimeOut()`、`E2E_CalcCrc(nBytes)` |
+| S3 | `[IMPEX] Failed to import` | 列名不匹配（多类型名/少 `()`/拼写） | 从最新导出模板核对：`DAL_Get_Data().alpha_angle`、`demo_get_position_local().x`、`DAL_Tim_CheckTimeout()`、`E2E_CalcCrc(nBytes)` |
 | S4 | 高级桩用例 notok，只报参数不对 | 高级桩参数参与校验：返回值 IN、参数 IN（个别 OUT）都要给期望值；指针参数（`E2E_CalcCrc(message)`）也要给列 | 建桩后先导出看每个变量的 passing 方向 |
 | S5 | 驱动生成报"桩函数返回值未定义" | 普通桩返回非 void 却没写桩体 | 桩体必须 `return 确定值;` |
-| S6 | 桩体编译不过 | 类型名在桩上下文不可用 | 桩体使用头文件里的类型：`GEAR_HALL_DATA_TYPE d; d.alpha_angle=86U; return d;` |
+| S6 | 桩体编译不过 | 类型名在桩上下文不可用 | 桩体使用头文件里的类型：`DEMO_DATA_TYPE d; d.alpha_angle=86U; return d;` |
 | S7 | 本地函数（static）也要可控 | 只能测试对象内部调用，无法从接口注入 | 在 TIE 的 **Local Functions** 里对本地函数建 Advanced Stub（结构体返回的成员变量名为 `本地函数名().成员`） |
 
 ---
@@ -95,7 +95,7 @@
 |---|---|---|---|
 | I1 | GUI 报 `No executable test object selected for execution.`；TDE 报 `The test object's interface is incomplete.`（Inputs/Outputs 全空） | 对象不可执行：`testobject.xml` 的 `state_mask=0x…1180`、`testitem_state_mask=0x00` | 判定标准：`0x…1188` + `0x80` 才可执行；不可执行先查接口方向与数据有效性 |
 | I2 | 结构体指针参数导致接口不完整 | TESSY 5.1 **指针参数没有 INOUT**（只有 IN/EXTERN/IRRELEVANT），而成员里混着 IN/OUT | `import -set-passing` 把该指针方向标成 `x`(IRRELEVANT)；用静态全局输出做 expected；指针写回内容无法断言 |
-| I3 | 想把 IRRELEVANT 的静态变量变成可输入 | 默认方向由分析决定 | `import -set-passing` 加列方向 `i`（实测 `AppGearPose.x` 这样修后覆盖率 25%→100%） |
+| I3 | 想把 IRRELEVANT 的静态变量变成可输入 | 默认方向由分析决定 | `import -set-passing` 加列方向 `i`（实测 `DemoPose.x` 这样修后覆盖率 25%→100%） |
 | I4 | `-set-passing` 用了 `io/inout/-` 后其它元素被改坏 | 只支持 `i`/`o`/`x`；非法标记导致导入失败但**部分应用** | 试之前先 `save-db`；坏了 `restore-module` 恢复 |
 | I5 | 改了一部分数据，另一部分被清空 | `import` 是**整表替换**（Values/Stubs/Properties 全被覆盖） | 一次导入必须含"所有用例 × 所有变量 × 所有桩体"，且基于最新导出改 |
 | I6 | 判断接口模型靠 xlsx/csv 结果误判 | 这两种导出只列"有值"的列 | 用 `export -format yaml` 看 `Values:` 段：为空 = 数据模型空/接口不完整 |
@@ -135,17 +135,17 @@
 | V10 | 改好 IDA/桩类型后 `restore-module`，配置全没了 | restore 用 TMB 整体替换模块（含 TIE 配置） | 改 TIE 前先 `save-db` 备份；出问题优先补数据/re-Analyze，别随手 restore |
 | V11 | 点执行报 `No executable test object selected for execution`，误以为模块坏了 | 在 TDE 里点 Execute（只作用于当前单对象） | 左侧工程树右键**模块** → Execute；跑前重开 TESSY，关闭时保存提示选 `No` |
 | V12 | ARMCC 报 `#3092 anonymous unions are only supported in --gnu mode` | 源码用了匿名联合 | 在**安装目录** `sys\templates\make\ts_make_uvision_uvsc_arm_v5.tpl` 编译行加 `--preinclude=<dir>\ts_anon_unions.h`（内容 `#pragma anon_unions`）；项目目录同名模板不生效 |
-| V13 | 做完 Ctrl+I 并保存，mask 仍是 `0x80000088`、用例 `0x80000000`，依旧不可执行 | Ctrl+I 只重建**数据模型**，不重算有效性位 | 紧接着跑一次模块级 `tessycmd analyze` → mask 变 `0x…1188`/`0x…1198`、用例 `0x…1100`（`BSP_Dflash_UT`、`BSP_eeprom_UT` 实测） |
+| V13 | 做完 Ctrl+I 并保存，mask 仍是 `0x80000088`、用例 `0x80000000`，依旧不可执行 | Ctrl+I 只重建**数据模型**，不重算有效性位 | 紧接着跑一次模块级 `tessycmd analyze` → mask 变 `0x…1188`/`0x…1198`、用例 `0x…1100`（`BSP_Flash_UT`、`BSP_Eeprom_UT` 实测） |
 | V14 | yaml 的 `Values:` 只有 `- []` `- []` `- [tc1.1]`，没有任何表头/变量行 | 数据模型被外部导入写成空表（接口列丢了） | 这是"空模型"signature：按 V13 的三步修（Ctrl+I → analyze → xlsx 填值）；此时 xlsx/script 直接导入都没用 |
 | V15 | 普通桩 body 空着，执行报 `MissingStubCodeException` | `Abort on missing stub code` 默认开，且每条用例 × 每个桩都要桩体 | 按返回类型补：非 void `return 0u;`、void `(void)0;`；对象级（Test Case=0）行也填一份更省事 |
 | V16 | 建 IDA 时在 Type 列表里找不到 `uint16_t`/`uint32_t`，确定性提示 `Please specify a type for the variable.` | TESSY Type 列表只含 C 基本类型 + 枚举 + 结构体，**typedef 不在里面** | 按位宽/符号选基本类型：`uint8_t*`→`unsigned char`、`uint16_t*`→**`unsigned short`**、`uint32_t*`→`unsigned long`、`intN_t*`→`signed char/short/long`；结构体/枚举指针直接选对应类型 |
-| V17 | 对象可执行、编译通过，执行时目标机 `terminated with exit code 6` | 指针参数被被测代码**解引用读写**，而测试数据里给了 `NULL`（如 `BSP_TJA1145_Send` 的 `tmpData=*data; *data=...;`） | 只读指针可给 NULL；**读写指针必须给 IDA 变量或有效地址** |
+| V17 | 对象可执行、编译通过，执行时目标机 `terminated with exit code 6` | 指针参数被被测代码**解引用读写**，而测试数据里给了 `NULL`（如 `BSP_Ext_Send` 的 `tmpData=*data; *data=...;`） | 只读指针可给 NULL；**读写指针必须给 IDA 变量或有效地址** |
 | V18 | 某个队列/数组相关对象执行必崩（exit code 6），单独跑也崩 | 遗留自动生成用例把大整数当**数组下标**（如 `g_rightRollerQueueHead=90`，数组只有 64）→ `queue[90]=x` 越界写 | 修正测试数据：下标/head/tail 必须 `< 数组长度`；顺手核对该对象所有数组/指针入参 |
 | V19 | Ctrl+I 后 `Values` 里**没有返回值/输出列**（只有入参列），执行结果 RS 显示 notok | 该对象返回值没有被 TESSY 建模为可断言输出（Ctrl+I 只生成了入参） | 覆盖度统计**不受影响**；要 RS 绿需在 TIE 里把 Return 设为可断言，或让函数写某个全局变量再断言该全局 |
 | V20 | 以为"指针参数就必须 IDA"，多做了 GUI 操作 | 指针只被**透传**给普通桩、被测函数自身不解引用（如 `DAL_Can_Write`：`return BSP_Can_Write(Hth, PduInfo);`） | 先看源码：**函数体内没有 `*ptr` / `ptr->x`** → 指针可传 `NULL`，不需要 IDA；有解引用才需要（见 V17） |
-| V21 | mask `0x80000088`，但 yaml `Values` **有表头/变量行**（不是空表） | 普通桩**桩体不全**（每个用例×每个桩都要有），数据被判不完整 | **不需要 GUI Ctrl+I**：export xlsx → 给所有用例行填桩体（`(void)0;`/`return 0u;`）+ 参数值 → import → mask 直接变 `0x…1188`（`DAL_Dflash_UT` 3 对象实测） |
-| V22 | mask 只有 `0x88`（连 `0x1000`/`0x80000000` 都没有），TDE 里接口树能显示但**没有可编辑列**，`Ctrl+I` 无反应/被禁用，普通 `import` 报 `[IMPEX] Failed to import` | 该对象**没有数据模型记录**（PDB 里缺失），属"半损坏"对象（常见于早期 restore/TMB 导入留下的孤儿对象；用例名是占位 `Dummy`、`state_mask=0x00`） | **不用删对象、不用 Ctrl+I**：手工造一个最小 xlsx（列名用接口元素路径如 `s_gearHallDataType.alpha_angle`，第 2 行写方向 `i/o`，第 3 行起写用例值）→ `tessycmd import -append -set-passing <file.xlsx>` → mask 变 `0x1188` 且数据列出现；随后再普通 `import` 一次把多余用例覆盖成干净用例（`DAL_GearControl_UT/DAL_Get_Gear_HallData` 实测：0x88 → 0x1188，3 条用例全 `0x1100`） |
-| V23 | 先批量"按返回类型补桩体"，之后逐个设计分支 → 覆盖率从 100% 掉到 10%/12% | 批量补桩把**逐用例桩体**（按用例变返回值）统一成了固定值，等于所有用例走同一条分支 | 顺序要反过来：**先按源码分支设计每用例的桩返回值与输入，再补"其余桩"的默认桩体**；改完必须回读 yaml 的 `Stubs:` 段确认逐用例值没被同质化（`DAL_updateGearPositiondata_Task` 实测：0.10/0.125 → 1.00/1.00） |
+| V21 | mask `0x80000088`，但 yaml `Values` **有表头/变量行**（不是空表） | 普通桩**桩体不全**（每个用例×每个桩都要有），数据被判不完整 | **不需要 GUI Ctrl+I**：export xlsx → 给所有用例行填桩体（`(void)0;`/`return 0u;`）+ 参数值 → import → mask 直接变 `0x…1188`（`DAL_Flash_UT` 3 对象实测） |
+| V22 | mask 只有 `0x88`（连 `0x1000`/`0x80000000` 都没有），TDE 里接口树能显示但**没有可编辑列**，`Ctrl+I` 无反应/被禁用，普通 `import` 报 `[IMPEX] Failed to import` | 该对象**没有数据模型记录**（PDB 里缺失），属"半损坏"对象（常见于早期 restore/TMB 导入留下的孤儿对象；用例名是占位 `Dummy`、`state_mask=0x00`） | **不用删对象、不用 Ctrl+I**：手工造一个最小 xlsx（列名用接口元素路径如 `s_demoDataType.alpha_angle`，第 2 行写方向 `i/o`，第 3 行起写用例值）→ `tessycmd import -append -set-passing <file.xlsx>` → mask 变 `0x1188` 且数据列出现；随后再普通 `import` 一次把多余用例覆盖成干净用例（`DAL_Demo_UT/DAL_Get_Data` 实测：0x88 → 0x1188，3 条用例全 `0x1100`） |
+| V23 | 先批量"按返回类型补桩体"，之后逐个设计分支 → 覆盖率从 100% 掉到 10%/12% | 批量补桩把**逐用例桩体**（按用例变返回值）统一成了固定值，等于所有用例走同一条分支 | 顺序要反过来：**先按源码分支设计每用例的桩返回值与输入，再补"其余桩"的默认桩体**；改完必须回读 yaml 的 `Stubs:` 段确认逐用例值没被同质化（`DAL_updatePosition_Task` 实测：0.10/0.125 → 1.00/1.00） |
 | V24 | `if / else if` 链只覆盖了一部分，C1 差一个分支（如 87.50%，8 分支缺 1） | `else if` 的**第二个条件为假**从没被求值：输入只取了 0 或 1，第一个条件为真时第二个短路不求值 | 加一条**非法值用例**（如 `ReadStep=99`，既不等于 `START_3D(0)` 也不等于 `GET_RESULT(1)`）→ 两个条件都求值且都假，`else if` 链的"两假"分支才被覆盖 |
 | V25 | 指针参数填了 `NULL`、裸全局变量名或 `&全局名`：分别导致**执行卡死**或 `import` 报 500 且**数据模型被清空**（mask 回到 `0x80000088`） | 指针参数在测试数据里只认 **IDA 变量名**（以及地址常量）；裸全局名不是合法指针值 | **必须 TIE→IDA** 建同类型变量（`uint8_t*` → `unsigned char`），填 `cnt = target_cnt`；不要试 `NULL`/`SbcRegConfigErr`/`&SbcRegConfigErr`（`DAL_SBC_Check_Reg` 实测） |
 | V26 | 被测函数的**局部值由桩通过指针参数写回**时，分支只走一条（如 C0 75%/C1 50%，`feeddog_en=true` 未覆盖） | 普通桩桩体 `{ _Bool s={0}; return s; }` 不写 `*value`，被测代码里的 `s_crvalue` 恒 0 | 桩体里按**参数名**写回：`{ if (value != 0) { *value = 0x02U; } return 1; }`，每条用例给不同写回值即可覆盖 if/else（`DAL_SBC_Read_WindowDog_Period` 实测 75/50% → 100/100%） |

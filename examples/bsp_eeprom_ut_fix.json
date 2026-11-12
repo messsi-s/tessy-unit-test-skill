@@ -1,5 +1,5 @@
 {
-  "module": "BSP_eeprom_UT",
+  "module": "BSP_Eeprom_UT",
   "objects": [
     {
       "object": "Flash_Eeprom_JobErrorNotification",

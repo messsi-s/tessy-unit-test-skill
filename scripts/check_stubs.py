@@ -1,8 +1,8 @@
 """Check whether given functions are configured as advanced / normal stubs.
 
 Usage:
-    python check_stubs.py appl_gear_control_task DAL_Tim_CheckTimeOut DAL_Tim_GetCurrentTime
-    python check_stubs.py appl_calc_gear_lever_pos appl_get_gear_position
+    python check_stubs.py demo_gear_task DAL_Tim_CheckTimeout DAL_Tim_GetTime
+    python check_stubs.py demo_calc_lever_pos demo_get_position_local
 
 Reading the result:
     advanced : put values into the Values sheet variables (see SKILL.md 3.2), no stub body

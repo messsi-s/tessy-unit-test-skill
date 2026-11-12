@@ -1,23 +1,23 @@
 ﻿"""按 JSON 规格生成 TESSY 测试用例 XLSX，可选导入并回读校验。
 
 用法：
-    python gen_cases.py --spec cases\\appl_calc_gear_lever.json [--import] [--verify]
+    python gen_cases.py --spec cases\\demo_calc_lever.json [--import] [--verify]
 
 JSON 规格（支持高级桩变量 / 普通桩桩体 / 多测试步）：
 
 {
-  "object": "appl_calc_gear_lever",
+  "object": "demo_calc_lever",
   "default_out": "*none*",          // 未显式断言的 OUT 变量默认值（*none* = 不校验）
   "cases": [
     {
       "name": "TC01_Center",
-      "desc": "alpha=86 落在中心窗口：AppGearPose.x=ZERO(0)",
+      "desc": "alpha=86 落在中心窗口：DemoPose.x=ZERO(0)",
       "spec": "SW-REQ-017",
       "steps": [
         {
-          "values": { "DAL_Get_Gear_HallData().alpha_angle": 86, "...": 0 },
-          "expect": { "AppGearPose.x": 0 },
-          "stubs":  { "DAL_Get_Gear_HallData": "GEAR_HALL_DATA_TYPE d; d.alpha_angle=86U; return d;" }
+          "values": { "DAL_Get_Data().alpha_angle": 86, "...": 0 },
+          "expect": { "DemoPose.x": 0 },
+          "stubs":  { "DAL_Get_Data": "DEMO_DATA_TYPE d; d.alpha_angle=86U; return d;" }
         }
       ]
     }

@@ -55,5 +55,5 @@ python scripts\inspect_interface.py <对象名>
 
 ## 如果用户坚持不建高级桩
 
-用**普通桩**也能完成用例：Stubs 表写桩体（`return 1u;`、结构体返回 `GEAR_HALL_DATA_TYPE d; d.alpha_angle=86U; return d;`）。
+用**普通桩**也能完成用例：Stubs 表写桩体（`return 1u;`、结构体返回 `DEMO_DATA_TYPE d; d.alpha_angle=86U; return d;`）。
 但**不要**在高级桩生效时写普通桩桩体——会被静默忽略。

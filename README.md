@@ -14,7 +14,7 @@ unit-test workflow from the agent: build module/interface, choose and configure 
 generate test cases per source branch, import with `tessycmd` and read back the result, run batches and
 triage failures, measure and explain C0/C1 coverage, and independently review completeness.
 
-Target setup: TESSY 5.x with Keil (ARMCC)/uVision, `tessycmd` available locally.
+Target setup: TESSY 5.x with armcc/uVision, `tessycmd` available locally.
 
 ### What it covers
 
@@ -80,7 +80,7 @@ tessy_config.example.json           configuration template
 测试流程——建模块/接口、选择与配置普通桩或高级桩、按源码分支生成测试用例、用 `tessycmd` 导入并回读校验、
 批处理执行与失败分诊、测量并解释 C0/C1 覆盖率、以及对交付用例做独立复核（覆盖度/完整度）。
 
-目标环境：TESSY 5.x + Keil（ARMCC）/uVision，本机可用 `tessycmd`。
+目标环境：TESSY 5.x + armcc/uVision，本机可用 `tessycmd`。
 
 ### 覆盖内容
 

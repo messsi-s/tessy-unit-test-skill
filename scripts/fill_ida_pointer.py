@@ -10,12 +10,12 @@
 
 用法：
     python fill_ida_pointer.py plan.json
-    python fill_ida_pointer.py --object CAN_Controller_Rx_handler --target target_canMsg \
+    python fill_ida_pointer.py --object CAN_Rx_Handler --target target_canMsg \
         --cases '[{"msgId":"0x758","dataLen":8},{"msgId":"0x67E","dataLen":0}]'
 
 plan.json 格式：
 {
-  "object": "CAN_Controller_Rx_handler",
+  "object": "CAN_Rx_Handler",
   "pointer": "canMsg",               # 可选，默认 canMsg
   "target":  "target_canMsg",        # IDA 变量名，必须与该对象 <var nam=...> 完全一致
   "plan": [                          # 按测试用例顺序，一条一个 dict
@@ -42,7 +42,7 @@ import tessy_common as tc  # noqa: E402
 
 def find_testobject_xml() -> Path | None:
     """在 persist 目录里找最近一次写过的 testobject.xml 所在 tdb。"""
-    base = Path(os.environ.get("TESSY_PERSIST", r"D:\T1V_Tessytest\tessy\persist"))
+    base = Path(os.environ.get("TESSY_PERSIST", r"D:\Demo_Tessytest\tessy\persist"))
     hits = [p for p in glob.glob(str(base / "**" / "testobject.xml"), recursive=True)]
     if not hits:
         return None

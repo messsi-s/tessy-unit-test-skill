@@ -36,7 +36,7 @@ foreach($m in $mods){
 }
 ```
 
-> `save-db` 的输出文件名里空格会编码成 `%20`（如 `New%20Test%20Collection.appl_gear.tmb`），
+> `save-db` 的输出文件名里空格会编码成 `%20`（如 `New%20Test%20Collection.demo_gear.tmb`），
 > `restore-module` 时要用**这个带 %20 的真实文件名**。
 
 ---
@@ -73,7 +73,7 @@ foreach($m in $mods){
 | 代码 | 原因 |
 |---|---|
 | `static inline` 寄存器访问器（`CAN_REG_AbortTxMsg` / `CAN_REG_ClearIntFlag` / `CAN_REG_IsBusoff`…） | 轮询硬件寄存器，无仿真就永远等 |
-| `void DAL_System_Delay(x){ while(DAL_Tim_CheckTimeOut(...)==0){} }` | 同文件内的 `static inline` 无法打桩 → 死循环 |
+| `void DAL_System_Delay(x){ while(DAL_Tim_CheckTimeout(...)==0){} }` | 同文件内的 `static inline` 无法打桩 → 死循环 |
 
 ### 处理
 
@@ -194,7 +194,7 @@ CTE 数据里的引用失效，TESSY 的 CTE 插件（`CteEditorExtension`）就
 
 ```powershell
 # 启动：必须经过 explorer（否则报 CreateProcess failed with error 5）
-Start-Process explorer.exe -ArgumentList '"D:\tessy\Razorcat\TESSY_5.1\bin\TESSY.exe"'
+Start-Process explorer.exe -ArgumentList '"D:\tessy\TESSY_5.1\bin\TESSY.exe"'
 # 等 30~45 秒再 connect
 & $TESSY_CMD connect
 & $TESSY_CMD list-projects

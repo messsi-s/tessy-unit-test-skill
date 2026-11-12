@@ -1,0 +1,77 @@
+{
+  "object": "demo_calc_lever",
+  "default_out": "*none*",
+  "cases": [
+    {
+      "name": "TC01_BelowLeftSecond",
+      "desc": "高级桩返回 alpha=40 < left_second_L(46)：判为 Invalid(7)",
+      "spec": "SW-REQ-017",
+      "steps": [
+        {
+          "values": {
+            "DAL_Get_Data().alpha_angle": 40,
+            "Demo_Cal_Data.centerdata.alphaH": 91,
+            "Demo_Cal_Data.centerdata.alphaL": 81,
+            "Demo_Cal_Data.geardata.left_frist_step_H": 76,
+            "Demo_Cal_Data.geardata.left_frist_step_L": 66,
+            "Demo_Cal_Data.geardata.left_second_step_H": 61,
+            "Demo_Cal_Data.geardata.left_second_step_L": 46,
+            "Demo_Cal_Data.geardata.right_first_step_H": 106,
+            "Demo_Cal_Data.geardata.right_first_step_L": 96,
+            "Demo_Cal_Data.geardata.right_second_step_H": 126,
+            "Demo_Cal_Data.geardata.right_second_step_L": 111
+          },
+          "expect": { "DemoPose.x": 7 }
+        }
+      ]
+    },
+    {
+      "name": "TC02_Center",
+      "desc": "alpha=86 落在中心窗口 [81,91]：DemoPose.x=ZERO(0)",
+      "spec": "SW-REQ-017",
+      "steps": [
+        {
+          "values": {
+            "DAL_Get_Data().alpha_angle": 86,
+            "Demo_Cal_Data.centerdata.alphaH": 91,
+            "Demo_Cal_Data.centerdata.alphaL": 81,
+            "Demo_Cal_Data.geardata.left_frist_step_H": 76,
+            "Demo_Cal_Data.geardata.left_frist_step_L": 66,
+            "Demo_Cal_Data.geardata.left_second_step_H": 61,
+            "Demo_Cal_Data.geardata.left_second_step_L": 46,
+            "Demo_Cal_Data.geardata.right_first_step_H": 106,
+            "Demo_Cal_Data.geardata.right_first_step_L": 96,
+            "Demo_Cal_Data.geardata.right_second_step_H": 126,
+            "Demo_Cal_Data.geardata.right_second_step_L": 111
+          },
+          "expect": { "DemoPose.x": 0 }
+        }
+      ]
+    },
+    {
+      "name": "TC03_NormalStub_Example",
+      "desc": "普通桩写法示例（若该函数是 normal stub，用 stubs 字段而非 values）",
+      "spec": "SW-REQ-017",
+      "steps": [
+        {
+          "values": {
+            "Demo_Cal_Data.centerdata.alphaH": 91,
+            "Demo_Cal_Data.centerdata.alphaL": 81,
+            "Demo_Cal_Data.geardata.left_frist_step_H": 76,
+            "Demo_Cal_Data.geardata.left_frist_step_L": 66,
+            "Demo_Cal_Data.geardata.left_second_step_H": 61,
+            "Demo_Cal_Data.geardata.left_second_step_L": 46,
+            "Demo_Cal_Data.geardata.right_first_step_H": 106,
+            "Demo_Cal_Data.geardata.right_first_step_L": 96,
+            "Demo_Cal_Data.geardata.right_second_step_H": 126,
+            "Demo_Cal_Data.geardata.right_second_step_L": 111
+          },
+          "expect": { "DemoPose.x": 2 },
+          "stubs": {
+            "DAL_Get_Data": "DEMO_DATA_TYPE d; d.alpha_angle = 50U; d.beta_angle = 0U; return d;"
+          }
+        }
+      ]
+    }
+  ]
+}

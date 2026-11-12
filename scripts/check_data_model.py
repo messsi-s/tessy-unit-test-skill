@@ -14,8 +14,8 @@ references/interface-passing-and-import.md.
 
 Usage:
     python check_data_model.py --collection "New Test Collection" \
-        --module appl_steerwheel_UT \
-        --object appl_steerwheel_update_sig_tx_mfsl
+        --module demo_signal_UT \
+        --object demo_signal_tx
 
     # or inspect a yaml already exported:
     python check_data_model.py --yaml path\\to\\object.yml
@@ -26,7 +26,7 @@ import subprocess
 import sys
 import tempfile
 
-DEFAULT_CMD = r'D:\tessy\Razorcat\TESSY_5.1\bin\tessycmd.exe'
+DEFAULT_CMD = r'D:\tessy\TESSY_5.1\bin\tessycmd.exe'
 
 
 def sh(cmd, *args):

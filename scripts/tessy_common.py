@@ -3,7 +3,7 @@
 配置来源（优先级从高到低）：
 1. 环境变量；
 2. 技能目录下的 tessy_config.json（可选，便于固定本机路径）；
-3. 内置默认值（贴合本机 TESSY 5.1.10 + Keil 安装）。
+3. 内置默认值（贴合本机 TESSY 5.1.10 + uVision 安装）。
 
 用法示例：
     from tessy_common import cfg, run, connect_sel, export, do_import
@@ -16,10 +16,10 @@ import subprocess
 from pathlib import Path
 
 DEFAULTS = {
-    "tessy_bin": r"D:\tessy\Razorcat\TESSY_5.1\bin",
-    "project": "T1V_test",
+    "tessy_bin": r"D:\tessy\TESSY_5.1\bin",
+    "project": "Demo_test",
     "collection": "New Test Collection",
-    "module": "appl_gear",
+    "module": "demo_gear",
     "work": os.path.join(os.environ.get("TEMP", "."), "tessy_ut"),
 }
 

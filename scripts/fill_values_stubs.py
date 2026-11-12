@@ -1,6 +1,6 @@
 """给"无分支直线调用"型对象批量填参数值 + 普通桩桩体，并回读 state_mask。
 
-适用场景（BSP_Dflash_UT / BSP_eeprom_UT 这类）：
+适用场景（BSP_Flash_UT / BSP_Eeprom_UT 这类）：
   函数只是 Unlock → 操作 → Lock 的顺序调用，没有分支；
   修复的难点只在**数据有效性**，不在用例设计。
 
@@ -15,7 +15,7 @@
 
 plan.json：
 {
-  "module": "BSP_eeprom_UT",
+  "module": "BSP_Eeprom_UT",
   "objects": [
     {"object": "BSP_eeprom_Read",
      "values": [{"blockId": "0", "offset": "0", "dataBuffer": "NULL", "length": "8"},
@@ -44,7 +44,7 @@ import tessy_common as tc  # noqa: E402
 
 
 def find_tdb() -> Path | None:
-    base = Path(os.environ.get("TESSY_PERSIST", r"D:\T1V_Tessytest\tessy\persist"))
+    base = Path(os.environ.get("TESSY_PERSIST", r"D:\Demo_Tessytest\tessy\persist"))
     hits = glob.glob(str(base / "**" / "testobject.xml"), recursive=True)
     return Path(max(hits, key=os.path.getmtime)).parent.parent if hits else None
 
