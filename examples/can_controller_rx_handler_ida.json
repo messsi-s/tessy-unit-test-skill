@@ -1,0 +1,14 @@
+{
+  "object": "CAN_Controller_Rx_handler",
+  "pointer": "canMsg",
+  "target": "target_canMsg",
+  "plan": [
+    {"msgId": "0x758", "dataLen": 8, "judge_diag_frame_flag": "1"},
+    {"msgId": "0x7DF", "dataLen": 8, "judge_diag_frame_flag": "0"},
+    {"msgId": "0x758", "dataLen": 8, "judge_diag_frame_flag": "0"},
+    {"msgId": "0x67E", "dataLen": 0, "judge_diag_frame_flag": "0"},
+    {"msgId": "0x626", "dataLen": 8, "judge_diag_frame_flag": "0"},
+    {"msgId": "0x123", "dataLen": 8, "judge_diag_frame_flag": "0"},
+    {"msgId": "0x7DF", "dataLen": 8, "judge_diag_frame_flag": "1"}
+  ]
+}
